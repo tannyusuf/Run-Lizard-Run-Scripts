@@ -1,35 +1,46 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
 using UnityEngine;
 
+/// <summary>
+/// Handles coin collection when player touches a coin
+/// </summary>
 public class Coin : MonoBehaviour
 {
-    // Start is called before the first frame update
+    // Empty Start and Update methods can be removed if not used
     void Start()
     {
-        
+        // Initialization can be added here if needed
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        // Any coin behavior updates would go here
     }
 
+    /// <summary>
+    /// Detects when player enters the coin's trigger collider
+    /// </summary>
+    /// <param name="other">The collider that entered the trigger</param>
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the other object has the IguanaCharacter component
+        // Check if the colliding object is the player
         IguanaCharacter iguana = other.GetComponent<IguanaCharacter>();
-        iguana.cointCount++;
-        Debug.Log($"coin added {iguana.cointCount}");
+        
+        // If it's the player, process the coin collection
         if (iguana != null)
         {
-            // You can call a method on the IguanaCharacter if needed
-            // e.g., iguana.CollectCoin();
+            // Increment the player's coin count
+            iguana.cointCount++;
+            
+            // Log the coin collection (for debugging)
+            Debug.Log($"coin added {iguana.cointCount}");
+            
+            // Play coin collection sound effect
             AudioManager.instance.PlaySFX(AudioManager.instance.coinSound);
-            // Destroy the coin object
+            
+            // Remove the coin from the game
             Destroy(gameObject);
         }
     }

@@ -1,26 +1,36 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Main character controller for the iguana player
+/// Manages player stats, animations, and actions
+/// </summary>
 public class IguanaCharacter : MonoBehaviour
 {
-    Animator iguanaAnimator;
-    public Transform respawnPoint;
-    public HealthBar healthSystem;
-    public int cointCount = 0;
-    public float damageAmount = 5f;
+    // Component references
+    Animator iguanaAnimator;           // Animator controller
+    public Transform respawnPoint;     // Where player respawns after death
+    public HealthBar healthSystem;     // Health system reference
+    
+    // Player stats
+    public int cointCount = 0;         // Current coin count
+    public float damageAmount = 5f;    // Base damage for attacks
 
-    // Değerleri korumak için static değişkenler
-    private static bool hasStoredValues = false;
-    private static int storedCointCount;
-    private static float storedDamageAmount;
-    private static float storedMaxHealth;
+    // Static variables to persist values between deaths/respawns
+    private static bool hasStoredValues = false;  // Whether values are stored
+    private static int storedCointCount;          // Stored coin count
+    private static float storedDamageAmount;      // Stored damage amount
+    private static float storedMaxHealth;         // Stored max health
 
+    /// <summary>
+    /// Initialize components and restore saved values if they exist
+    /// </summary>
     void Start()
     {
         iguanaAnimator = GetComponent<Animator>();
         healthSystem = GetComponent<HealthBar>();
 
-        // Eğer daha önce kaydedilmiş değerler varsa onları geri yükle
+        // Restore previous values if they exist
         if (hasStoredValues)
         {
             cointCount = storedCointCount;
@@ -33,17 +43,28 @@ public class IguanaCharacter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Trigger the attack animation and apply damage
+    /// </summary>
     public void Attack()
     {
         iguanaAnimator.SetTrigger("Attack");
         AudioManager.instance.PlaySFX(AudioManager.instance.punch);
-        Invoke("TryDamageEnemy", 0.3f);
+        Invoke("TryDamageEnemy", 0.3f);  // Delay damage to sync with animation
     }
 
+    /// <summary>
+    /// Apply damage to enemies within range
+    /// </summary>
     public void TryDamageEnemy()
     {
+        // Define attack range
         float damageRange = 2f;
+        
+        // Find all colliders within range
         Collider[] hitEnemies = Physics.OverlapSphere(transform.position, damageRange);
+        
+        // Check each collider to see if it's an enemy
         foreach (Collider col in hitEnemies)
         {
             if (col.CompareTag("Enemy"))
@@ -57,17 +78,34 @@ public class IguanaCharacter : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Trigger hit reaction animation
+    /// </summary>
     public void Hit() => iguanaAnimator.SetTrigger("Hit");
+    
+    /// <summary>
+    /// Trigger eat animation
+    /// </summary>
     public void Eat() => iguanaAnimator.SetTrigger("Eat");
 
+    /// <summary>
+    /// Handle player death and respawn
+    /// </summary>
     public void Death()
     {
-        // Ölmeden önce mevcut değerleri kaydet
+        // Save current values before death
         StoreCurrentValues();
+        
+        // Play death animation
         iguanaAnimator.SetTrigger("Death");
+        
+        // Respawn after delay
         Invoke("Rebirth", 2f);
     }
 
+    /// <summary>
+    /// Store current player stats for persistence after death
+    /// </summary>
     private void StoreCurrentValues()
     {
         storedCointCount = cointCount;
@@ -79,40 +117,61 @@ public class IguanaCharacter : MonoBehaviour
         hasStoredValues = true;
     }
 
+    /// <summary>
+    /// Reload the current scene to respawn player
+    /// </summary>
     public void Rebirth()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        // Scene yüklendiğinde Start() metodunda değerler otomatik olarak geri yüklenecek
+        // Values are restored in Start() after scene reloads
     }
 
+    /// <summary>
+    /// Handle root motion for animations
+    /// </summary>
     void OnAnimatorMove()
     {
         if (iguanaAnimator && iguanaAnimator.applyRootMotion)
         {
+            // Apply animation movement with multiplier
             transform.position += iguanaAnimator.deltaPosition * 2f;
             transform.rotation *= iguanaAnimator.deltaRotation;
         }
     }
 
+    /// <summary>
+    /// Process movement inputs
+    /// </summary>
+    /// <param name="v">Forward/backward movement (-1 to 1)</param>
+    /// <param name="h">Left/right turning (-1 to 1)</param>
     public void Move(float v, float h)
     {
         iguanaAnimator.SetFloat("Forward", v);
         iguanaAnimator.SetFloat("Turn", h);
     }
 
-    // Coin ekleme metodu (upgrade sistemleri için)
+    /// <summary>
+    /// Add coins to player inventory
+    /// </summary>
+    /// <param name="amount">Number of coins to add</param>
     public void AddCoins(int amount)
     {
         cointCount += amount;
     }
 
-    // Damage artırma metodu (upgrade sistemleri için)
+    /// <summary>
+    /// Increase player's attack damage
+    /// </summary>
+    /// <param name="amount">Amount to increase damage by</param>
     public void IncreaseDamage(float amount)
     {
         damageAmount += amount;
     }
 
-    // Can artırma metodu (upgrade sistemleri için)
+    /// <summary>
+    /// Increase player's maximum health
+    /// </summary>
+    /// <param name="amount">Amount to increase max health by</param>
     public void IncreaseMaxHealth(float amount)
     {
         if (healthSystem != null)

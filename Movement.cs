@@ -1,47 +1,64 @@
 using UnityEngine;
 
+/// <summary>
+/// Controls the player's character movement and jumping
+/// </summary>
 public class Movement : MonoBehaviour
 {
-    public float moveSpeed = 5f;
-    public float gravity = -9.81f;
-    public float jumpHeight = 2f;
+    // Movement parameters
+    public float moveSpeed = 5f;       // Walking/running speed
+    public float gravity = -9.81f;     // Gravity force
+    public float jumpHeight = 2f;      // Jump height
+    
+    // Component references
+    private CharacterController controller;  // Character controller component
+    private Vector3 velocity;          // Current movement velocity
+    private bool isGrounded;           // Is player touching ground?
+    
+    // Ground check parameters
+    public Transform groundCheck;      // Position to check for ground
+    public float groundDistance = 0.4f; // Radius of ground check sphere
+    public LayerMask groundMask;       // Which layers count as ground
+    private bool isWalking = false;    // Is player currently walking?
 
-    private CharacterController controller;
-    private Vector3 velocity;
-    private bool isGrounded;
-
-    public Transform groundCheck;
-    public float groundDistance = 0.4f;
-    public LayerMask groundMask;
-    private bool isWalking = false;
-
-
+    /// <summary>
+    /// Initialize components
+    /// </summary>
     void Start()
     {
         controller = GetComponent<CharacterController>();
     }
 
+    /// <summary>
+    /// Handle player movement, jumping, and gravity each frame
+    /// </summary>
     void Update()
     {
-        // Zemin kontrolü
+        // Check if player is on the ground
         isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
+        // Reset downward velocity when grounded
         if (isGrounded && velocity.y < 0)
         {
-            velocity.y = -2f;  // yere yapýþýk kalmasý için küçük negatif bir deðer
+            velocity.y = -2f;  // Small negative value to keep grounded
         }
 
-        // Hareket giriþleri
+        // Get horizontal and vertical input axes
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
+        // Calculate movement direction relative to player orientation
         Vector3 move = transform.right * x + transform.forward * z;
 
+        // Apply movement
         controller.Move(move * moveSpeed * Time.deltaTime);
+        
+        // Handle walking sound effects
         if (move.magnitude > 0.1f && isGrounded)
         {
             if (!isWalking)
             {
+                // Start walking sound when player starts walking on ground
                 AudioManager.instance.PlayLizardWalk();
                 isWalking = true;
             }
@@ -50,17 +67,20 @@ public class Movement : MonoBehaviour
         {
             if (isWalking)
             {
+                // Stop walking sound when player stops moving
                 AudioManager.instance.StopLizardWalk();
                 isWalking = false;
             }
         }
-        // Zýplama
+        
+        // Handle jumping
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
+            // Apply upward velocity using jump height formula
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        // Yerçekimi
+        // Apply gravity
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
